@@ -1,19 +1,27 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
-const sendgridTransport = require("nodemailer-sendgrid-transport");
+// const sendgridTransport = require("nodemailer-sendgrid-transport");
 
 const User = require("../models/user");
 const Token = require("../models/token");
 
 const transporter = nodemailer.createTransport(
   //cau hinh ndemailer su dng sendrid
-  sendgridTransport({
+  // sendgridTransport({
+  //   auth: {
+  //     api_key:
+  //       "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",
+  //   },
+  // })
+  {
+    host: "sandbox.smtp.mailtrap.io",
+    port: 2525,
     auth: {
-      api_key:
-        "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",
+      user: "0a669dd93a4cc4",
+      pass: "3160ac70c0038a",
     },
-  })
+  }
 );
 
 exports.getLogin = (req, res, next) => {
@@ -47,6 +55,8 @@ exports.getSignup = (req, res, next) => {
 exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
+  console.log("email", email);
+  console.log("pass", password);
   User.findOne({ email: email })
     .then((user) => {
       if (!user) {
@@ -126,6 +136,7 @@ exports.postSignup = (req, res, next) => {
               token.token +
               "\n\nThank You!\n",
           };
+          token.save();
           transporter.sendMail(mailOptions, function (err) {
             console.log("mail options", mailOptions);
             if (err) {
@@ -153,6 +164,7 @@ exports.postSignup = (req, res, next) => {
 //    app.get('/confirmation/:email/:token',confirmEmail)
 
 exports.confirmEmail = function (req, res, next) {
+  console.log("1");
   Token.findOne({ token: req.params.token }, function (err, token) {
     // token is not found into database i.e. token may have expired
     if (!token) {
@@ -177,6 +189,7 @@ exports.confirmEmail = function (req, res, next) {
             // return res
             //   .status(200)
             //   .send("User has been already verified. Please Login");
+            return res.redirect("/login");
           }
           // verify user
           else {
@@ -189,7 +202,7 @@ exports.confirmEmail = function (req, res, next) {
               }
               // account successfully verified
               else {
-                return req.redirect("/login");
+                return res.redirect("/login");
               }
             });
           }
